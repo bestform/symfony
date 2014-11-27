@@ -820,6 +820,54 @@ class ContainerBuilderTest extends \PHPUnit_Framework_TestCase
 
         $this->assertTrue($classInList);
     }
+
+    /**
+     * @expectedException \Symfony\Component\DependencyInjection\Exception\InvalidArgumentException
+     */
+    public function testPrivateServiceIsNotAccessibleWhenRequiredByOneOtherService()
+    {
+        $fooDefinition = new Definition('BarClass');
+        $fooDefinition->setPublic(false);
+
+        $fooUserDefinition = new Definition('BarUserClass', array(new Reference('bar')));
+
+        $container = new ContainerBuilder();
+        $container->setResourceTracking(false);
+
+        $container->addDefinitions(array(
+            'bar' => $fooDefinition,
+            'bar_user' => $fooUserDefinition
+        ));
+
+        $container->compile();
+
+        $container->get('bar');
+    }
+
+    /**
+     * @expectedException \Symfony\Component\DependencyInjection\Exception\InvalidArgumentException
+     */
+    public function testPrivateServiceIsNotAccessibleWhenRequiredByMoreThanOneOtherService()
+    {
+        $fooDefinition = new Definition('BarClass');
+        $fooDefinition->setPublic(false);
+
+        $fooUserDefinition = new Definition('BarUserClass', array(new Reference('bar')));
+        $fooUserDefinition2 = new Definition('BarUserClass2', array(new Reference('bar')));
+
+        $container = new ContainerBuilder();
+        $container->setResourceTracking(false);
+
+        $container->addDefinitions(array(
+            'bar' => $fooDefinition,
+            'bar_user' => $fooUserDefinition,
+            'bar_user2' => $fooUserDefinition2
+        ));
+
+        $container->compile();
+
+        $container->get('bar');
+    }
 }
 
 class FooClass
